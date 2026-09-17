@@ -84,14 +84,10 @@ def heuristic(state: StateT, computerColor) -> float:
         state:
             The game state to evaluate.
     """
-    
-    opponentColor = ""
-    if computerColor == "Yellow":
-        opponentColor = "Red"
-    else:
-        opponentColor = "Yellow"
-    
-    ##check for wins
+
+    opponentColor = "Red" if computerColor == "Yellow" else "Yellow"
+
+    # Check for immediate wins/losses first
     for col in range(7):
         for row in range(6):
             if state.columns[col][row] == computerColor:
@@ -122,8 +118,23 @@ def heuristic(state: StateT, computerColor) -> float:
                 if col <= 3 and row <= 2 and all(state.columns[col + i][row + i] == opponentColor for i in range(4)):
                     return float("inf")  # Loss
 
-    
+    # If opponent has 3 in a row with an opening on both sides, they can win next turn.
+    # Pattern: empty, opponent, opponent, opponent, empty
+    for col in range(7):
+        for row in range(6):
+            for dc, dr in ((1, 0), (0, 1), (1, 1), (1, -1)):
+                cells = []
+                for i in range(5):
+                    c = col + dc * i
+                    r = row + dr * i
+                    if 0 <= c < 7 and 0 <= r < 6:
+                        cells.append(state.columns[c][r])
+                    else:
+                        cells.append(None)
 
+                if cells.count(opponentColor) == 3 and cells.count(None) == 2:
+                    if cells[0] is None and cells[-1] is None:
+                        return float("inf") - 0.5
 
     val = state.columns[3][0]
     print(val)
