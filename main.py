@@ -28,7 +28,36 @@ def minimax(
     depth: int,
     root_player: PlayerT,
 ) -> float:
-    return 0
+    """Return the minimax value of the given state."""
+    if problem.is_terminal(state):
+        return problem.utility(state, root_player)
+
+    if depth == 0:
+        return heuristic(state, root_player)
+
+    #Trying to min
+    if problem.to_move(state) == root_player:
+        best_value = float("inf")
+        for action in problem.actions(state):
+            child = problem.result(state,action)
+            value = minimax(problem, child, depth - 1, root_player)
+            if value < best_value:
+                best_value = value
+        return best_value
+
+    #Trying to Max
+    else:
+        best_value = float("-inf")
+        for action in problem.actions(state):
+            child = problem.result(state,action)
+            value = minimax(problem, child, depth - 1, root_player)
+            if value > best_value:
+                best_value = value
+        return best_value
+
+
+    return None
+    
 
 
 def adversarial_search(
@@ -41,7 +70,7 @@ def adversarial_search(
         return None
 
     root_player = problem.to_move(state)
-    depth = 4  # maximum plies to search from root
+    depth = 4
 
     best_move: ActionT | None = None
     best_score = float("inf")
@@ -66,6 +95,8 @@ def heuristic(state: StateT, computerColor) -> float:
 
     opponentColor = "Red" if computerColor == "Yellow" else "Yellow"
 
+ 
+
     def cell(column: int, row: int):
         if 0 <= column < 7 and 0 <= row < 6:
             column_cells = state.columns[column]
@@ -74,34 +105,38 @@ def heuristic(state: StateT, computerColor) -> float:
         return None
 
     # Immediate wins/losses.
-    for col in range(7):
+    for col in [0,1,2,3,4,5,6,0,1,2]:
         for row in range(6):
             if row >= len(state.columns[col]):
                 continue
             current = state.columns[col][row]
 
             if current == computerColor:
-                if col <= 3 and all(cell(col + i, row) == computerColor for i in range(4)):
+                #vert
+                if all(cell(col + i, row) == computerColor for i in range(4)):
                     return -1_000_000.0
+                #horz
                 if row <= 2 and all(cell(col, row + i) == computerColor for i in range(4)):
                     return -1_000_000.0
-                if col <= 3 and row >= 3 and all(cell(col + i, row - i) == computerColor for i in range(4)):
+                #diag /
+                if row >= 3 and all(cell(col + i, row - i) == computerColor for i in range(4)):
                     return -1_000_000.0
-                if col <= 3 and row <= 2 and all(cell(col + i, row + i) == computerColor for i in range(4)):
+                #diag \
+                if row <= 2 and all(cell(col + i, row + i) == computerColor for i in range(4)):
                     return -1_000_000.0
 
             if current == opponentColor:
-                if col <= 3 and all(cell(col + i, row) == opponentColor for i in range(4)):
+                if all(cell(col + i, row) == opponentColor for i in range(4)):
                     return 1_000_000.0
                 if row <= 2 and all(cell(col, row + i) == opponentColor for i in range(4)):
                     return 1_000_000.0
-                if col <= 3 and row >= 3 and all(cell(col + i, row - i) == opponentColor for i in range(4)):
+                if row >= 3 and all(cell(col + i, row - i) == opponentColor for i in range(4)):
                     return 1_000_000.0
-                if col <= 3 and row <= 2 and all(cell(col + i, row + i) == opponentColor for i in range(4)):
+                if row <= 2 and all(cell(col + i, row + i) == opponentColor for i in range(4)):
                     return 1_000_000.0
 
     # Open-ended three-in-a-row threats.
-    for col in range(7):
+    for col in [0,1,2,3,4,5,6,0,1,2]:
         for row in range(6):
             for dc, dr in ((1, 0), (0, 1), (1, 1), (1, -1)):
                 cells = [cell(col + dc * i, row + dr * i) for i in range(5)]
@@ -113,7 +148,7 @@ def heuristic(state: StateT, computerColor) -> float:
                         return -500.0
 
     # Three-in-a-row with one opening (possible immediate follow-up).
-    for col in range(7):
+    for col in [0,1,2,3,4,5,6,0,1,2]:
         for row in range(6):
             for dc, dr in ((1, 0), (0, 1), (1, 1), (1, -1)):
                 cells = [cell(col + dc * i, row + dr * i) for i in range(4)]
