@@ -35,23 +35,23 @@ def minimax(
     if depth == 0:
         return heuristic(state, root_player)
 
-    #Trying to min
+    #Trying to Max
     if problem.to_move(state) == root_player:
-        best_value = float("inf")
+        best_value = float("-inf")
         for action in problem.actions(state):
-            child = problem.result(state,action)
+            child = problem.result(state, action)
             value = minimax(problem, child, depth - 1, root_player)
-            if value < best_value:
+            if value > best_value:
                 best_value = value
         return best_value
 
-    #Trying to Max
+    #Trying to Min
     else:
-        best_value = float("-inf")
+        best_value = float("inf")
         for action in problem.actions(state):
-            child = problem.result(state,action)
+            child = problem.result(state, action)
             value = minimax(problem, child, depth - 1, root_player)
-            if value > best_value:
+            if value < best_value:
                 best_value = value
         return best_value
 
@@ -73,12 +73,12 @@ def adversarial_search(
     depth = 4
 
     best_move: ActionT | None = None
-    best_score = float("inf")
+    best_score = float("-inf")
 
     for action in legal_actions:
         child = problem.result(state, action)
         score = minimax(problem, child, depth - 1, root_player)
-        if score < best_score:
+        if score > best_score:
             best_score = score
             best_move = action
 
@@ -95,82 +95,112 @@ def heuristic(state: StateT, computerColor) -> float:
 
     opponentColor = "Red" if computerColor == "Yellow" else "Yellow"
 
- 
-
     def cell(column: int, row: int):
-        if 0 <= column < 7 and 0 <= row < 6:
-            column_cells = state.columns[column]
+        cyl_column = column % 7
+        if 0 <= row < 6:
+            column_cells = state.columns[cyl_column]
             if row < len(column_cells):
                 return column_cells[row]
         return None
 
-    # Immediate wins/losses.
-    for col in [0,1,2,3,4,5,6,0,1,2]:
-        for row in range(6):
-            if row >= len(state.columns[col]):
-                continue
-            current = state.columns[col][row]
+    # # Immediate wins/losses.
+    # for col in range(7):
+    #     for row in range(6):
+    #         if row >= len(state.columns[col]):
+    #             continue
+    #         current = state.columns[col][row]
 
-            if current == computerColor:
-                #vert
-                if all(cell(col + i, row) == computerColor for i in range(4)):
-                    return -1_000_000.0
-                #horz
-                if row <= 2 and all(cell(col, row + i) == computerColor for i in range(4)):
-                    return -1_000_000.0
-                #diag /
-                if row >= 3 and all(cell(col + i, row - i) == computerColor for i in range(4)):
-                    return -1_000_000.0
-                #diag \
-                if row <= 2 and all(cell(col + i, row + i) == computerColor for i in range(4)):
-                    return -1_000_000.0
+    #         if current == computerColor:
+    #             #horz
+    #             if all(cell(col + i, row) == computerColor for i in range(4)):
+    #                 return 1_000_000.0
+    #             #vert
+    #             if row <= 2 and all(cell(col, row + i) == computerColor for i in range(4)):
+    #                 return 1_000_000.0
+    #             #diag /
+    #             if row >= 3 and all(cell(col + i, row - i) == computerColor for i in range(4)):
+    #                 return 1_000_000.0
+    #             #diag \
+    #             if row <= 2 and all(cell(col + i, row + i) == computerColor for i in range(4)):
+    #                 return 1_000_000.0
 
-            if current == opponentColor:
-                if all(cell(col + i, row) == opponentColor for i in range(4)):
-                    return 1_000_000.0
-                if row <= 2 and all(cell(col, row + i) == opponentColor for i in range(4)):
-                    return 1_000_000.0
-                if row >= 3 and all(cell(col + i, row - i) == opponentColor for i in range(4)):
-                    return 1_000_000.0
-                if row <= 2 and all(cell(col + i, row + i) == opponentColor for i in range(4)):
-                    return 1_000_000.0
+    #         if current == opponentColor:
+    #             if all(cell(col + i, row) == opponentColor for i in range(4)):
+    #                 return -1_000_000.0
+    #             if row <= 2 and all(cell(col, row + i) == opponentColor for i in range(4)):
+    #                 return -1_000_000.0
+    #             if row >= 3 and all(cell(col + i, row - i) == opponentColor for i in range(4)):
+    #                 return -1_000_000.0
+    #             if row <= 2 and all(cell(col + i, row + i) == opponentColor for i in range(4)):
+    #                 return -1_000_000.0
 
-    # Open-ended three-in-a-row threats.
-    for col in [0,1,2,3,4,5,6,0,1,2]:
-        for row in range(6):
-            for dc, dr in ((1, 0), (0, 1), (1, 1), (1, -1)):
-                cells = [cell(col + dc * i, row + dr * i) for i in range(5)]
-                if cells.count(opponentColor) == 3 and cells.count(None) == 2:
-                    if cells[0] is None and cells[-1] is None:
-                        return 500.0
-                if cells.count(computerColor) == 3 and cells.count(None) == 2:
-                    if cells[0] is None and cells[-1] is None:
-                        return -500.0
+    # score = 0.0
+    # # Open-ended three-in-a-row threats.
+    # for col in range(7):
+    #     for row in range(6):
+    #         for dc, dr in ((1, 0), (0, 1), (1, 1), (1, -1)):
+    #             cells = [cell(col + dc * i, row + dr * i) for i in range(5)]
+    #             if cells.count(opponentColor) == 4:
+    #                 return -1_000_000.0
+    #             if cells.count(computerColor) == 4:
+    #                 return 1_000_000.0
+    #             if cells.count(opponentColor) == 3 and cells.count(None) == 2:
+    #                 if cells[0] is None and cells[-1] is None:
+    #                     score -= 500.0
+    #             if cells.count(computerColor) == 3 and cells.count(None) == 2:
+    #                 if cells[0] is None and cells[-1] is None:
+    #                     score += 500.0
 
-    # Three-in-a-row with one opening (possible immediate follow-up).
-    for col in [0,1,2,3,4,5,6,0,1,2]:
-        for row in range(6):
-            for dc, dr in ((1, 0), (0, 1), (1, 1), (1, -1)):
-                cells = [cell(col + dc * i, row + dr * i) for i in range(4)]
-                if cells.count(opponentColor) == 3 and cells.count(None) == 1:
-                    if cells[0] is None or cells[-1] is None:
-                        return 100.0
-                if cells.count(computerColor) == 3 and cells.count(None) == 1:
-                    if cells[0] is None or cells[-1] is None:
-                        return -100.0
+    # # Three-in-a-row with one opening (possible immediate follow-up).
+    # for col in range(7):
+    #     for row in range(6):
+    #         for dc, dr in ((1, 0), (0, 1), (1, 1), (1, -1)):
+    #             cells = [cell(col + dc * i, row + dr * i) for i in range(4)]
+    #             if cells.count(opponentColor) == 3 and cells.count(None) == 1:
+    #                 if cells[0] is None or cells[-1] is None:
+    #                     score -= 100.0
+    #             if cells.count(computerColor) == 3 and cells.count(None) == 1:
+    #                 if cells[0] is None or cells[-1] is None:
+    #                     score += 100.0
 
-    # Fallback: prefer center pieces because they are stronger in Connect Four.
-    center_score = 0.0
-    for col in range(7):
-        center_weight = 3 - abs(col - 3)
-        for row in range(6):
-            value = cell(col, row)
-            if value == computerColor:
-                center_score -= center_weight
-            elif value == opponentColor:
-                center_score += center_weight
+    # # Fallback: prefer center pieces because they are stronger in Connect Four.
+    # for col in range(7):
+    #     center_weight = 3 - abs(col - 3)
+    #     for row in range(6):
+    #         value = cell(col, row)
+    #         if value == computerColor:
+    #             score += center_weight
+    #         elif value == opponentColor:
+    #             score -= center_weight
 
-    return center_score
+    score = 0.0
 
+    def evaluate(cells: list[str | None]) -> float:
+        nonlocal score
+        if cells.count(opponentColor) == 4:
+            return 1_000_000.0
+        elif cells.count(computerColor) == 4:
+            return -1_000_000.0
+        elif cells.count(opponentColor) == 3 and cells.count(None) == 1:
+            return -100.0
+        elif cells.count(computerColor) == 3 and cells.count(None) == 1:
+            return 100.0
+        elif cells.count(opponentColor) == 2 and cells.count(None) == 2:
+            return -10.0
+        elif cells.count(computerColor) == 2 and cells.count(None) == 2:
+            return 10.0
 
+    # Evaluate all possible lines of 4 cells in the board
+    while score > 1_000_000.0 or score < -1_000_000.0:    
+        for col in range(7):
+            for row in range(6):
+                # Horizontal
+                score +=evaluate([cell(col + i, row) for i in range(4)])
+                # Vertical
+                score += evaluate([cell(col, row + i) for i in range(4)])
+                # Diagonal /
+                score += evaluate([cell(col + i, row - i) for i in range(4)])
+                # Diagonal \
+                score += evaluate([cell(col + i, row + i) for i in range(4)])
 
+    return score
