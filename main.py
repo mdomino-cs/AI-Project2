@@ -26,6 +26,8 @@ def minimax(
     problem: AdversarialSearchProblem[StateT, ActionT, PlayerT],
     state: StateT,
     depth: int,
+    alpha: float,
+    beta: float,
     root_player: PlayerT,
 ) -> float:
     """Return the minimax value of the given state."""
@@ -40,9 +42,12 @@ def minimax(
         best_value = float("-inf")
         for action in problem.actions(state):
             child = problem.result(state, action)
-            value = minimax(problem, child, depth - 1, root_player)
+            value = minimax(problem, child, depth - 1, alpha, beta, root_player)
             if value > best_value:
                 best_value = value
+            alpha = max(alpha, best_value)
+            if beta <= alpha:
+                break
         return best_value
 
     #Trying to Min
@@ -50,9 +55,12 @@ def minimax(
         best_value = float("inf")
         for action in problem.actions(state):
             child = problem.result(state, action)
-            value = minimax(problem, child, depth - 1, root_player)
+            value = minimax(problem, child, depth - 1, alpha, beta, root_player)
             if value < best_value:
                 best_value = value
+            beta = min(beta, best_value)
+            if beta <= alpha:
+                break
         return best_value
 
 
@@ -70,14 +78,14 @@ def adversarial_search(
         return None
 
     root_player = problem.to_move(state)
-    depth = 4
+    depth = 5
 
     best_move: ActionT | None = None
     best_score = float("-inf")
 
     for action in legal_actions:
         child = problem.result(state, action)
-        score = minimax(problem, child, depth - 1, root_player)
+        score = minimax(problem, child, depth - 1, float("-inf"), float("inf"), root_player)
         if score > best_score:
             best_score = score
             best_move = action
@@ -178,9 +186,9 @@ def heuristic(state: StateT, computerColor) -> float:
     def evaluate(cells: list[str | None]) -> float:
         nonlocal score
         if cells.count(opponentColor) == 4:
-            return 1_000_000.0
-        elif cells.count(computerColor) == 4:
             return -1_000_000.0
+        elif cells.count(computerColor) == 4:
+            return 1_000_000.0
         elif cells.count(opponentColor) == 3 and cells.count(None) == 1:
             return -100.0
         elif cells.count(computerColor) == 3 and cells.count(None) == 1:
@@ -189,18 +197,35 @@ def heuristic(state: StateT, computerColor) -> float:
             return -10.0
         elif cells.count(computerColor) == 2 and cells.count(None) == 2:
             return 10.0
+        return 0.0
 
-    # Evaluate all possible lines of 4 cells in the board
-    while score > 1_000_000.0 or score < -1_000_000.0:    
+    # Evaluate all possible lines of 4 cells in the board    
+    for col in range(7):
+        for row in range(6):
+            # Horizontal
+            score +=evaluate([cell(col + i, row) for i in range(4)])
+            if score > 1_000_000.0 or score < -1_000_000.0:
+                break
+            # Vertical
+            score += evaluate([cell(col, row + i) for i in range(4)])
+            if score > 1_000_000.0 or score < -1_000_000.0:
+                break
+            # Diagonal /
+            score += evaluate([cell(col + i, row - i) for i in range(4)])
+            if score > 1_000_000.0 or score < -1_000_000.0:
+                break
+            # Diagonal \
+            score += evaluate([cell(col + i, row + i) for i in range(4)])
+            if score > 1_000_000.0 or score < -1_000_000.0:
+                break
+
+    for row in range(6):
+        center_weight = 2 - abs(row - 2.5)
         for col in range(7):
-            for row in range(6):
-                # Horizontal
-                score +=evaluate([cell(col + i, row) for i in range(4)])
-                # Vertical
-                score += evaluate([cell(col, row + i) for i in range(4)])
-                # Diagonal /
-                score += evaluate([cell(col + i, row - i) for i in range(4)])
-                # Diagonal \
-                score += evaluate([cell(col + i, row + i) for i in range(4)])
+            value = cell(col, row)
+            if value == computerColor:
+                score += center_weight
+            elif value == opponentColor:
+                score -= center_weight
 
     return score
