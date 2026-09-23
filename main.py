@@ -219,6 +219,9 @@ def heuristic(state: StateT, computerColor) -> float:
             if score > 1_000_000.0 or score < -1_000_000.0:
                 break
 
+    if score > 1_000_000.0 or score < -1_000_000.0:
+        return score
+    
     for row in range(6):
         center_weight = 2 - abs(row - 2.5)
         for col in range(10):
