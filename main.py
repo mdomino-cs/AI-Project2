@@ -200,7 +200,7 @@ def heuristic(state: StateT, computerColor) -> float:
         return 0.0
 
     # Evaluate all possible lines of 4 cells in the board    
-    for col in range(7):
+    for col in range(10):
         for row in range(6):
             # Horizontal
             score +=evaluate([cell(col + i, row) for i in range(4)])
@@ -221,7 +221,7 @@ def heuristic(state: StateT, computerColor) -> float:
 
     for row in range(6):
         center_weight = 2 - abs(row - 2.5)
-        for col in range(7):
+        for col in range(10):
             value = cell(col, row)
             if value == computerColor:
                 score += center_weight
